@@ -1,0 +1,10 @@
+---
+BasedOnStyle: Google
+SortIncludes: Never
+IncludeBlocks: Preserve
+AlignConsecutiveDeclarations: true
+AlignConsecutiveAssignments: true
+AlignTrailingComments: true
+AlignConsecutiveMacros: true
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
