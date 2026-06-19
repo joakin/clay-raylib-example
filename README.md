@@ -1,8 +1,8 @@
-# Clay Counter
+# Clay Raylib example
 
 Tiny C demo using [Clay](https://github.com/nicbarker/clay) for layout and
 [Raylib](https://www.raylib.com/) for rendering. It builds as a native
-fullscreen desktop app and as a shell-free web canvas app.
+fullscreen desktop app and as a web canvas app.
 
 ## Project Structure
 
@@ -18,7 +18,7 @@ fullscreen desktop app and as a shell-free web canvas app.
 
 ## Native Dependencies
 
-Install the native and web toolchains with Homebrew:
+Install the native and web toolchains with Homebrew, for example:
 
 ```sh
 brew install raylib emscripten
@@ -43,7 +43,7 @@ make
 
 Outputs:
 
-- Native app: `build/native/clay_counter`
+- Native app: `build/native/clay_raylib_example`
 - Web app: `build/web/index.html`
 
 Run the native app:

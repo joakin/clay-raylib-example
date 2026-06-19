@@ -261,7 +261,7 @@ int main(void) {
 #endif
   SetConfigFlags(flags);
 
-  InitWindow(960, 540, "Clay Counter");
+  InitWindow(960, 540, "Clay Raylib example");
   app_fonts[0] = GetFontDefault();
   clay_raylib_renderer_set_fonts(app_fonts, 1);
   clay_raylib_renderer_init();

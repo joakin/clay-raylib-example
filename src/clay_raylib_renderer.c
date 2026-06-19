@@ -10,7 +10,7 @@
 
 #define CLAY_RAYLIB_RENDERER_MAX_OVERLAY_DEPTH 64
 
-typedef void (*ClayCounterRendererCustomRenderFn)(
+typedef void (*ClayRaylibRendererCustomRenderFn)(
     const Clay_RenderCommand* command, Rectangle bounds, AppMetrics metrics,
     void* user_data);
 
@@ -28,8 +28,8 @@ static Clay_Color
         {0};
 static int32_t clay_raylib_renderer_overlay_depth = 0;
 
-static ClayCounterRendererCustomRenderFn clay_raylib_renderer_custom_fn = NULL;
-static void* clay_raylib_renderer_custom_user_data                      = NULL;
+static ClayRaylibRendererCustomRenderFn clay_raylib_renderer_custom_fn = NULL;
+static void* clay_raylib_renderer_custom_user_data                     = NULL;
 
 #if defined(PLATFORM_WEB) || defined(GRAPHICS_API_OPENGL_ES2)
 static const char* clay_raylib_renderer_overlay_shader_code =
@@ -139,7 +139,7 @@ void clay_raylib_renderer_set_fonts(Font* fonts, int32_t count) {
 }
 
 void clay_raylib_renderer_set_custom_handler(
-    ClayCounterRendererCustomRenderFn custom_fn, void* user_data) {
+    ClayRaylibRendererCustomRenderFn custom_fn, void* user_data) {
   clay_raylib_renderer_custom_fn        = custom_fn;
   clay_raylib_renderer_custom_user_data = user_data;
 }

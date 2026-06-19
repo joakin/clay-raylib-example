@@ -1,4 +1,4 @@
-APP := clay_counter
+APP := clay_raylib_example
 SRC := src/main.c
 # TODO: Do this with clang
 MAIN_DEPS := src/clay_raylib_renderer.c include/clay.h
