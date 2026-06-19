@@ -15,6 +15,7 @@
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc11-extensions"
+#pragma clang diagnostic ignored "-Wc23-extensions"
 #pragma clang diagnostic ignored "-Wextra-semi"
 #pragma clang diagnostic ignored "-Wgnu-empty-initializer"
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
