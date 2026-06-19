@@ -1,5 +1,7 @@
 APP := clay_counter
 SRC := src/main.c
+# TODO: Do this with clang
+MAIN_DEPS := src/clay_raylib_renderer.c include/clay.h
 
 CC := clang
 EMCC := emcc
@@ -40,10 +42,10 @@ compile-flags.txt:
 compile_flags.txt: Makefile
 	printf '%s\n' $(CFLAGS) $(NATIVE_CFLAGS) > $@
 
-build/native/$(APP): $(SRC) include/clay.h | build/native
+build/native/$(APP): $(SRC) $(MAIN_DEPS) | build/native
 	$(CC) $(CFLAGS) $(NATIVE_CFLAGS) $(SRC) -o $@ $(NATIVE_LIBS)
 
-build/web/index.html: $(SRC) include/clay.h web/shell.html $(RAYLIB_WEB_LIB) | build/web
+build/web/index.html: $(SRC) $(MAIN_DEPS) web/shell.html $(RAYLIB_WEB_LIB) | build/web
 	EM_CACHE=$(EM_CACHE) $(EMCC) $(WEB_CFLAGS) $(SRC) $(RAYLIB_WEB_LIB) -o $@ $(WEB_LDFLAGS)
 
 $(RAYLIB_WEB_LIB): $(RAYLIB_STAMP) | build/web

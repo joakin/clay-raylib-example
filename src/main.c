@@ -40,6 +40,8 @@ typedef struct AppMetrics {
   float   scale_y;
 } AppMetrics;
 
+#include "clay_raylib_renderer.c"
+
 static const Clay_Color COLOR_BACKGROUND    = {246, 248, 252, 255};
 static const Clay_Color COLOR_PANEL         = {255, 255, 255, 255};
 static const Clay_Color COLOR_PANEL_BORDER  = {210, 216, 226, 255};
@@ -51,70 +53,12 @@ static const Clay_Color COLOR_BUTTON_BORDER = {17, 88, 78, 255};
 static const Clay_Color COLOR_WHITE         = {255, 255, 255, 255};
 
 static RenderTexture2D  render_target       = {0};
+static Font             app_fonts[1]        = {0};
 static Clay_ElementId   button_id           = {0};
 static Clay_BoundingBox button_bounds       = {0};
 static bool             button_bounds_ready = false;
 static int32_t          counter             = 0;
 static char             counter_text[64]    = {0};
-
-static uint8_t color_byte(float value) {
-  if (value < 0.0f) return 0;
-  if (value > 255.0f) return 255;
-  return (uint8_t)(value + 0.5f);
-}
-
-static Color to_raylib_color(Clay_Color color) {
-  return (Color){color_byte(color.r), color_byte(color.g), color_byte(color.b),
-                 color_byte(color.a)};
-}
-
-static Rectangle scale_box(Clay_BoundingBox box, float scale_x, float scale_y) {
-  return (Rectangle){box.x * scale_x, box.y * scale_y, box.width * scale_x,
-                     box.height * scale_y};
-}
-
-static float rounded_rect_amount(Rectangle rect, Clay_CornerRadius radius,
-                                 float scale_x, float scale_y) {
-  float scaled_radius =
-      fmaxf(radius.topLeft * scale_x, radius.topLeft * scale_y);
-  float smallest_side = fminf(rect.width, rect.height);
-
-  if ((scaled_radius <= 0.0f) || (smallest_side <= 0.0f)) return 0.0f;
-
-  float roundness = (scaled_radius * 2.0f) / smallest_side;
-  return fminf(roundness, 1.0f);
-}
-
-static void copy_clay_text(Clay_StringSlice text, char* buffer,
-                           size_t capacity) {
-  int32_t length = text.length;
-  if (length < 0) length = 0;
-  if ((size_t)length >= capacity) length = (int32_t)capacity - 1;
-
-  memcpy(buffer, text.chars, (size_t)length);
-  buffer[length] = '\0';
-}
-
-static float text_spacing(uint16_t font_size, uint16_t letter_spacing) {
-  if (letter_spacing > 0) return (float)letter_spacing;
-  return fmaxf(1.0f, (float)font_size * 0.08f);
-}
-
-static Clay_Dimensions measure_clay_text(Clay_StringSlice        text,
-                                         Clay_TextElementConfig* config,
-                                         void*                   user_data) {
-  (void)user_data;
-
-  char buffer[1024];
-  copy_clay_text(text, buffer, sizeof(buffer));
-
-  Font    font = GetFontDefault();
-  Vector2 size =
-      MeasureTextEx(font, buffer, (float)config->fontSize,
-                    text_spacing(config->fontSize, config->letterSpacing));
-
-  return (Clay_Dimensions){size.x, size.y};
-}
 
 static void handle_clay_error(Clay_ErrorData error_data) {
   fprintf(stderr, "Clay error: %.*s\n", error_data.errorText.length,
@@ -215,101 +159,6 @@ static void ensure_render_target(AppMetrics metrics) {
   }
 }
 
-static void draw_clay_text(Clay_TextRenderData text, Clay_BoundingBox box,
-                           float scale_x, float scale_y) {
-  char buffer[1024];
-  copy_clay_text(text.stringContents, buffer, sizeof(buffer));
-
-  DrawTextEx(GetFontDefault(), buffer,
-             (Vector2){box.x * scale_x, box.y * scale_y},
-             (float)text.fontSize * scale_y,
-             text_spacing(text.fontSize, text.letterSpacing) * scale_x,
-             to_raylib_color(text.textColor));
-}
-
-static void draw_clay_border(Clay_BorderRenderData border, Rectangle rect,
-                             float scale_x, float scale_y) {
-  Color            color = to_raylib_color(border.color);
-  Clay_BorderWidth width = border.width;
-
-  if ((width.left == width.right) && (width.left == width.top) &&
-      (width.left == width.bottom)) {
-    float roundness =
-        rounded_rect_amount(rect, border.cornerRadius, scale_x, scale_y);
-    DrawRectangleRoundedLinesEx(rect, roundness, 16,
-                                (float)width.left * scale_x, color);
-    return;
-  }
-
-  if (width.left > 0)
-    DrawRectangleRec(
-        (Rectangle){rect.x, rect.y, (float)width.left * scale_x, rect.height},
-        color);
-  if (width.right > 0)
-    DrawRectangleRec(
-        (Rectangle){rect.x + rect.width - ((float)width.right * scale_x),
-                    rect.y, (float)width.right * scale_x, rect.height},
-        color);
-  if (width.top > 0)
-    DrawRectangleRec(
-        (Rectangle){rect.x, rect.y, rect.width, (float)width.top * scale_y},
-        color);
-  if (width.bottom > 0)
-    DrawRectangleRec(
-        (Rectangle){rect.x,
-                    rect.y + rect.height - ((float)width.bottom * scale_y),
-                    rect.width, (float)width.bottom * scale_y},
-        color);
-}
-
-static void render_clay_commands(Clay_RenderCommandArray commands,
-                                 AppMetrics              metrics) {
-  for (int32_t i = 0; i < commands.length; i++) {
-    Clay_RenderCommand* command = &commands.internalArray[i];
-    Rectangle           rect =
-        scale_box(command->boundingBox, metrics.scale_x, metrics.scale_y);
-
-    switch (command->commandType) {
-      case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-        float roundness = rounded_rect_amount(
-            rect, command->renderData.rectangle.cornerRadius, metrics.scale_x,
-            metrics.scale_y);
-        Color color =
-            to_raylib_color(command->renderData.rectangle.backgroundColor);
-
-        if (roundness > 0.0f)
-          DrawRectangleRounded(rect, roundness, 16, color);
-        else
-          DrawRectangleRec(rect, color);
-      } break;
-
-      case CLAY_RENDER_COMMAND_TYPE_BORDER: {
-        draw_clay_border(command->renderData.border, rect, metrics.scale_x,
-                         metrics.scale_y);
-      } break;
-
-      case CLAY_RENDER_COMMAND_TYPE_TEXT: {
-        draw_clay_text(command->renderData.text, command->boundingBox,
-                       metrics.scale_x, metrics.scale_y);
-      } break;
-
-      case CLAY_RENDER_COMMAND_TYPE_SCISSOR_START: {
-        BeginScissorMode((int)rect.x, (int)rect.y, (int)rect.width,
-                         (int)rect.height);
-      } break;
-
-      case CLAY_RENDER_COMMAND_TYPE_SCISSOR_END: {
-        EndScissorMode();
-      } break;
-
-      default:
-        fprintf(stderr, "Unsupported clay render command: %d",
-                command->commandType);
-        break;
-    }
-  }
-}
-
 static void build_counter_ui(void) {
   snprintf(counter_text, sizeof(counter_text), "Count: %" PRId32, counter);
   Clay_String count_string = {.isStaticallyAllocated = false,
@@ -383,8 +232,8 @@ static void frame(void) {
   BeginDrawing();
 
   BeginTextureMode(render_target);
-  ClearBackground(to_raylib_color(COLOR_BACKGROUND));
-  render_clay_commands(commands, metrics);
+  ClearBackground(clay_raylib_renderer_color(COLOR_BACKGROUND));
+  clay_raylib_renderer_render(commands, metrics);
   EndTextureMode();
 
   ClearBackground(BLACK);
@@ -413,6 +262,9 @@ int main(void) {
   SetConfigFlags(flags);
 
   InitWindow(960, 540, "Clay Counter");
+  app_fonts[0] = GetFontDefault();
+  clay_raylib_renderer_set_fonts(app_fonts, 1);
+  clay_raylib_renderer_init();
 
 #ifndef PLATFORM_WEB
   ToggleBorderlessWindowed();
@@ -428,7 +280,7 @@ int main(void) {
       (Clay_Dimensions){(float)GetScreenWidth(), (float)GetScreenHeight()},
       (Clay_ErrorHandler){.errorHandlerFunction = handle_clay_error,
                           .userData             = NULL});
-  Clay_SetMeasureTextFunction(measure_clay_text, NULL);
+  Clay_SetMeasureTextFunction(clay_raylib_renderer_measure_text, NULL);
 
 #ifdef PLATFORM_WEB
   emscripten_set_main_loop(frame, 0, 1);
@@ -436,6 +288,7 @@ int main(void) {
   while (!WindowShouldClose()) frame();
 
   if (render_target.id != 0) UnloadRenderTexture(render_target);
+  clay_raylib_renderer_shutdown();
   CloseWindow();
 #endif
 

@@ -6,8 +6,8 @@ fullscreen desktop app and as a shell-free web canvas app.
 
 ## Project Structure
 
-- `src/main.c` contains the app, the small Clay-to-Raylib renderer, and the
-  high-DPI render-texture path.
+- `src/main.c` contains the app and high-DPI render-texture path.
+- `src/clay_raylib_renderer.c` is the unity-included Clay-to-Raylib renderer.
 - `include/clay.h` is the vendored Clay single header.
 - `web/shell.html` is the minimal Emscripten shell. The canvas fills the browser
   viewport and the C code sizes the backing store for `devicePixelRatio`.
